@@ -1,0 +1,53 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@theme {
+  --color-primary-50: #eef7ff;
+  --color-primary-100: #d9edff;
+  --color-primary-200: #bce0ff;
+  --color-primary-300: #8ecdff;
+  --color-primary-400: #59b0ff;
+  --color-primary-500: #3393ff;
+  --color-primary-600: #1c76f5;
+  --color-primary-700: #165ee0;
+  --color-primary-800: #184bb5;
+  --color-primary-900: #1a428f;
+  --color-accent-50: #ecfdf5;
+  --color-accent-100: #d1fae5;
+  --color-accent-200: #a6f4cf;
+  --color-accent-300: #6ee7b7;
+  --color-accent-400: #34d399;
+  --color-accent-500: #10b981;
+  --color-accent-600: #059669;
+  --color-accent-700: #047857;
+  --color-accent-800: #065f46;
+  --color-accent-900: #064e3b;
+}
+
+:root {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  margin: 0;
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+@keyframes float-up {
+  0% { transform: translateY(10px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.animate-float-up {
+  animation: float-up 0.4s ease-out;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
