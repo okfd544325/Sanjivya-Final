@@ -12,34 +12,111 @@ import {
 } from './data';
 import type { FormAnalysisResult } from './data';
 import ExerciseAnimation from './Animations';
+import { useBhashini } from './bhashini/BhashiniContext';
+import { BhashiniHeader } from './bhashini/BhashiniHeader';
+import { BhashiniModal } from './bhashini/BhashiniModal';
+
+function useCycleProfile() {
+  const [cycleDay, setCycleDay] = useState(() => Number(localStorage.getItem('cycleDay')) || 9);
+  const [cycleLength, setCycleLength] = useState(() => Number(localStorage.getItem('cycleLength')) || 28);
+  const [ageGroup, setAgeGroup] = useState(() => localStorage.getItem('ageGroup') || '18-40');
+  const [userGoal, setUserGoal] = useState(() => localStorage.getItem('userGoal') || 'Sports Performance');
+
+  useEffect(() => {
+    localStorage.setItem('cycleDay', cycleDay.toString());
+    localStorage.setItem('cycleLength', cycleLength.toString());
+    localStorage.setItem('ageGroup', ageGroup);
+    localStorage.setItem('userGoal', userGoal);
+  }, [cycleDay, cycleLength, ageGroup, userGoal]);
+
+  const ratio = cycleDay / cycleLength;
+  let phase = '';
+  let description = '';
+  let readiness = '';
+  let focus = '';
+
+  if (ratio <= 5 / 28) {
+    phase = 'Menstrual Phase';
+    readiness = 'Recovery-focused';
+    focus = 'Rest + gentle movement';
+    description = 'Lower energy, cramps/fatigue may occur';
+  } else if (ratio <= 10 / 28) {
+    phase = 'Follicular Phase';
+    readiness = 'Strong';
+    focus = 'Strength + endurance';
+    description = 'Energy may increase';
+  } else if (ratio <= 14 / 28) {
+    phase = 'Ovulatory Phase';
+    readiness = 'Strong';
+    focus = 'Performance + power';
+    description = 'Higher energy/performance may occur';
+  } else if (ratio <= 18 / 28) {
+    phase = 'Early Luteal Phase';
+    readiness = 'Moderate';
+    focus = 'Maintain + build';
+    description = 'Relatively stable energy for many users';
+  } else if (ratio <= 22 / 28) {
+    phase = 'Late Luteal Phase';
+    readiness = 'Moderate';
+    focus = 'Moderate training + recovery';
+    description = 'Fatigue/bloating/mood changes may occur';
+  } else if (ratio <= 26 / 28) {
+    phase = 'Premenstrual Phase';
+    readiness = 'Gentle';
+    focus = 'Maintenance + self-care';
+    description = 'Energy may decrease for some users';
+  } else {
+    phase = 'Late premenstrual';
+    readiness = 'Recovery-focused';
+    focus = 'Recovery + gentle movement';
+    description = 'Energy may decrease for some users';
+  }
+
+  const getExercises = () => {
+    if (ageGroup === 'Below 18') return ['General age-appropriate fitness', 'Bodyweight mechanics', 'Play-based movement'];
+    if (ageGroup === '40+') return ['Recovery & mobility', 'Strength maintenance', 'Low-impact progression'];
+
+    switch (userGoal) {
+      case 'Strength & Muscle': return ['Squats', 'Lunges', 'Glute exercises', 'Core exercises'];
+      case 'Sports Performance': return ['Jump landing', 'Single-leg squat', 'Sprint start', 'Lateral movement'];
+      case 'Endurance': return ['Moderate cardio', 'Walking/jogging', 'Step-ups', 'Mobility'];
+      case 'Mobility & Recovery': return ['Gentle stretching', 'Hip mobility', 'Yoga-style movements', 'Breathing exercises'];
+      default: return ['Squat', 'Lunges', 'Core', 'Light cardio'];
+    }
+  };
+
+  return { cycleDay, setCycleDay, cycleLength, setCycleLength, phase, description, readiness, focus, ageGroup, setAgeGroup, userGoal, setUserGoal, recommendedExercises: getExercises() };
+}
 
 // ===== LAYOUT =====
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
-  { to: '/sports', label: 'Sports', icon: Bike },
-  { to: '/exercises', label: 'Exercises', icon: Dumbbell },
-  { to: '/analysis', label: 'Form Analysis', icon: Camera },
-  { to: '/cycle', label: 'Cycle & Risk', icon: HeartPulse },
-  { to: '/screening', label: 'RED-S Screening', icon: ClipboardList },
-  { to: '/progress', label: 'Progress', icon: TrendingUp },
+  { to: '/', labelKey: 'nav.dashboard', defaultLabel: 'Dashboard', icon: LayoutDashboard, end: true },
+  { to: '/cycle', labelKey: 'nav.cycle', defaultLabel: 'Cycle & Risk', icon: HeartPulse },
+  { to: '/sports', labelKey: 'nav.sports', defaultLabel: 'Sports', icon: Bike },
+  { to: '/exercises', labelKey: 'nav.exercises', defaultLabel: 'Exercises', icon: Dumbbell },
+  { to: '/analysis', labelKey: 'nav.analysis', defaultLabel: 'Form Analysis', icon: Camera },
+  { to: '/screening', labelKey: 'nav.screening', defaultLabel: 'RED-S Screening', icon: ClipboardList },
+  { to: '/progress', labelKey: 'nav.progress', defaultLabel: 'Progress', icon: TrendingUp },
 ];
 
 export function Layout() {
   const location = useLocation();
+  const { t } = useBhashini();
+
   return (
     <div className="min-h-screen flex bg-slate-50">
-      <aside className="hidden md:flex w-64 flex-col bg-white border-r border-slate-200 fixed h-screen">
+      <aside className="hidden md:flex w-64 flex-col bg-white border-r border-slate-200 fixed h-screen z-30">
         <div className="px-6 py-5 border-b border-slate-100 flex items-center gap-2">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center shadow-md">
             <Activity className="w-5 h-5 text-white" strokeWidth={2.5} />
           </div>
-          <div><h1 className="text-lg font-bold text-slate-900 leading-none">CycleGuard</h1><p className="text-[10px] text-slate-400 mt-0.5 leading-none">SIH 2026 Prototype</p></div>
+          <div><h1 className="text-lg font-bold text-slate-900 leading-none">Sanjivya</h1><p className="text-[10px] text-slate-400 mt-0.5 leading-none">SIH 2026 Prototype</p></div>
         </div>
         <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
           {navItems.map((item) => (
             <NavLink key={item.to} to={item.to} end={item.end}
-              className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-primary-50 text-primary-700' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
-              <item.icon className="w-[18px] h-[18px]" strokeWidth={2} />{item.label}
+              className={({ isActive }) => `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${isActive ? 'bg-primary-50 text-primary-700 font-semibold' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-700'}`}>
+              <item.icon className="w-[18px] h-[18px]" strokeWidth={2} />{t(item.labelKey, item.defaultLabel)}
             </NavLink>
           ))}
         </nav>
@@ -47,17 +124,24 @@ export function Layout() {
       </aside>
       <div className="md:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-2">
         <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center"><Activity className="w-4 h-4 text-white" strokeWidth={2.5} /></div>
-        <h1 className="text-base font-bold text-slate-900">CycleGuard</h1>
+        <h1 className="text-base font-bold text-slate-900">Sanjivya</h1>
       </div>
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-slate-200 flex justify-around px-1 py-1.5">
         {navItems.map((item) => {
           const isActive = item.end ? location.pathname === item.to : location.pathname.startsWith(item.to);
+          const label = t(item.labelKey, item.defaultLabel);
           return <NavLink key={item.to} to={item.to} end={item.end} className={`flex flex-col items-center gap-0.5 px-2 py-1 rounded-lg ${isActive ? 'text-primary-600' : 'text-slate-400'}`}>
-            <item.icon className="w-5 h-5" strokeWidth={2} /><span className="text-[9px] font-medium leading-none">{item.label.split(' ')[0]}</span>
+            <item.icon className="w-5 h-5" strokeWidth={2} /><span className="text-[9px] font-medium leading-none truncate max-w-[50px]">{label.split(' ')[0]}</span>
           </NavLink>;
         })}
       </nav>
-      <main className="flex-1 md:ml-64 pt-14 md:pt-0 pb-16 md:pb-0"><Outlet /></main>
+      <main className="flex-1 md:ml-64 pt-14 md:pt-0 pb-16 md:pb-0 flex flex-col min-h-screen">
+        <BhashiniHeader />
+        <div className="flex-1">
+          <Outlet />
+        </div>
+        <BhashiniModal />
+      </main>
     </div>
   );
 }
@@ -92,27 +176,55 @@ function RiskGauge({ score }: { score: number }) {
 }
 
 export function Dashboard() {
+  const cycle = useCycleProfile();
+  const { t } = useBhashini();
+
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div><h1 className="text-2xl font-bold text-slate-900">Welcome back</h1><p className="text-slate-500 text-sm mt-1">Here's your training snapshot for today.</p></div>
-        <Link to="/analysis" className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-xl font-medium text-sm transition-colors shadow-sm"><Camera className="w-4 h-4" />Start Form Analysis</Link>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">{t('dash.welcome', 'Welcome back')}</h1>
+          <p className="text-slate-500 text-sm mt-1">{t('dash.subtitle', "Here's your training snapshot for today.")}</p>
+        </div>
+        <Link to="/analysis" className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-xl font-medium text-sm transition-colors shadow-sm">
+          <Camera className="w-4 h-4" />{t('btn.startAnalysis', 'Start Form Analysis')}
+        </Link>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="bg-white rounded-2xl border border-slate-200 p-6 lg:col-span-1">
-          <div className="flex items-center gap-2 mb-4"><HeartPulse className="w-4 h-4 text-primary-500" /><h2 className="text-sm font-semibold text-slate-700">Current Risk Score</h2></div>
-          <RiskGauge score={mockAthlete.currentRiskScore} />
+          <div className="flex items-center gap-2 mb-4">
+            <HeartPulse className="w-4 h-4 text-primary-500" />
+            <h2 className="text-sm font-semibold text-slate-700">{t('dash.injuryRiskProfile', 'Injury Risk Profile')}</h2>
+          </div>
+          <div className="flex flex-col items-center justify-center text-center mt-6">
+            <span className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-50 mb-3"><ShieldCheck className="w-8 h-8 text-primary-500" /></span>
+            <span className="text-sm font-bold text-slate-900">Descriptive Guidance Active</span>
+          </div>
           <div className="mt-4 pt-4 border-t border-slate-100 text-center">
-            <span className="inline-flex items-center gap-1.5 text-sm font-medium text-amber-600"><AlertTriangle className="w-4 h-4" />MODERATE RISK</span>
-            <p className="text-xs text-slate-400 mt-1">Demo logic — not medically validated</p>
+            <p className="text-xs text-slate-500 leading-relaxed">Risk percentages have been replaced with descriptive guidance to help you focus on qualitative improvements.</p>
           </div>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200 p-6 lg:col-span-2">
-          <div className="flex items-center gap-2 mb-4"><Activity className="w-4 h-4 text-accent-500" /><h2 className="text-sm font-semibold text-slate-700">Cycle Phase & Training</h2></div>
+          <div className="flex items-center gap-2 mb-4">
+            <Activity className="w-4 h-4 text-accent-500" />
+            <h2 className="text-sm font-semibold text-slate-700">{t('dash.cyclePhaseTraining', 'Cycle Phase & Training')}</h2>
+          </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-xl p-4"><p className="text-xs text-slate-500 font-medium">Current Phase</p><p className="text-xl font-bold text-primary-700 mt-1">{mockCycle.phase}</p><p className="text-xs text-slate-400 mt-1">Day {mockCycle.day} of cycle</p></div>
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4"><p className="text-xs text-slate-500 font-medium">Risk Modifier</p><p className="text-xl font-bold text-amber-600 mt-1">+{mockCycle.riskModifier}%</p><p className="text-xs text-slate-400 mt-1">Injury risk adjustment</p></div>
-            <div className="col-span-2 bg-slate-50 rounded-xl p-4"><p className="text-xs text-slate-500 font-medium mb-1">Today's Workout</p><p className="text-sm font-semibold text-slate-700">{mockAthlete.todayWorkout}</p><Link to="/cycle" className="text-xs text-primary-600 font-medium mt-2 inline-block hover:underline">View cycle details →</Link></div>
+            <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-xl p-4">
+              <p className="text-xs text-slate-500 font-medium">{t('dash.currentPhase', 'Current Phase')}</p>
+              <p className="text-xl font-bold text-primary-700 mt-1">{cycle.phase}</p>
+              <p className="text-xs text-slate-400 mt-1">Day {cycle.cycleDay} of cycle</p>
+            </div>
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-4">
+              <p className="text-xs text-slate-500 font-medium">{t('dash.readiness', 'Readiness')}</p>
+              <p className="text-xl font-bold text-amber-600 mt-1">{cycle.readiness}</p>
+              <p className="text-xs text-slate-400 mt-1">Training state</p>
+            </div>
+            <div className="col-span-2 bg-slate-50 rounded-xl p-4">
+              <p className="text-xs text-slate-500 font-medium mb-1">{t('dash.todaysFocus', "Today's Focus")}</p>
+              <p className="text-sm font-semibold text-slate-700">{cycle.focus}</p>
+              <Link to="/cycle" className="text-xs text-primary-600 font-medium mt-2 inline-block hover:underline">View cycle details →</Link>
+            </div>
           </div>
         </div>
       </div>
@@ -120,7 +232,7 @@ export function Dashboard() {
         <StatCard icon={Camera} label="Form Score" value={`${mockAthlete.formScore}/100`} sublabel="Last analysis" color="bg-primary-500" to="/analysis" />
         <StatCard icon={TrendingUp} label="Training Load" value={`${mockAthlete.trainingLoad}%`} sublabel="This week" color="bg-accent-500" to="/progress" />
         <StatCard icon={Dumbbell} label="Exercises" value="8" sublabel="In library" color="bg-violet-500" to="/exercises" />
-        <StatCard icon={Activity} label="Cycle Day" value={mockAthlete.cycleDay} sublabel={mockCycle.phase} color="bg-amber-500" to="/cycle" />
+        <StatCard icon={Activity} label="Cycle Day" value={cycle.cycleDay} sublabel={cycle.phase} color="bg-amber-500" to="/cycle" />
       </div>
       <div className="bg-white rounded-2xl border border-slate-200 p-6">
         <div className="flex items-center justify-between mb-4"><h2 className="text-sm font-semibold text-slate-700">Recent Form Analyses</h2><Link to="/progress" className="text-xs text-primary-600 font-medium hover:underline">View all →</Link></div>
@@ -138,7 +250,7 @@ export function Dashboard() {
           ))}
         </div>
       </div>
-      <p className="text-center text-xs text-slate-400 pt-2">CycleGuard is a prototype for SIH 2026. All risk scores and recommendations are demo logic, not medical advice.</p>
+      <p className="text-center text-xs text-slate-400 pt-2">Sanjivya is a prototype for SIH 2026. All risk scores and recommendations are demo logic, not medical advice.</p>
     </div>
   );
 }
@@ -210,10 +322,12 @@ export function ExerciseLibrary() {
 }
 
 // ===== LIVE FORM ANALYSIS =====
-const SAMPLE_INTERVAL_MS = 4000;
+export const GEMINI_API_KEY = "AQ.Ab8RN6JUqxl_fSI5DVCzeWVD5_BgRsN00PTG1ktYtu0Pc4tXA";
+const SAMPLE_INTERVAL_MS = 250;
 type AnalysisPhase = 'select' | 'camera' | 'analyzing' | 'result';
 
 export function LiveFormAnalysis() {
+  const cycle = useCycleProfile();
   const location = useLocation();
   const navigate = useNavigate();
   const passedId = (location.state as { exerciseId?: string } | null)?.exerciseId;
@@ -224,19 +338,49 @@ export function LiveFormAnalysis() {
   const [analyzing, setAnalyzing] = useState(false);
   const [result, setResult] = useState<FormAnalysisResult | null>(null);
   const [analyzedCount, setAnalyzedCount] = useState(0);
+  const [geminiFeedback, setGeminiFeedback] = useState<string>("Waiting for AI analysis...");
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const overlayRef = useRef<HTMLCanvasElement | null>(null);
   const sampleTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const selectedExercise = selectedExerciseId ? getExercise(selectedExerciseId) : undefined;
 
   const startCamera = useCallback(async () => {
     setCameraError(null);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
+      let stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const videoInputs = devices.filter(device => device.kind === 'videoinput');
+
+      let preferredCamera = videoInputs.find(d =>
+        d.label.toLowerCase().includes('integrated') ||
+        d.label.toLowerCase().includes('webcam') ||
+        d.label.toLowerCase().includes('built-in')
+      ) || videoInputs.find(d =>
+        !d.label.toLowerCase().includes('phone') &&
+        !d.label.toLowerCase().includes('virtual') &&
+        !d.label.toLowerCase().includes('obs')
+      );
+
+      if (preferredCamera) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            deviceId: { exact: preferredCamera.deviceId },
+            width: { ideal: 1280 }, height: { ideal: 720 }
+          },
+          audio: false
+        });
+      }
+
       streamRef.current = stream;
       if (videoRef.current) { videoRef.current.srcObject = stream; await videoRef.current.play(); }
       setCameraActive(true);
-    } catch { setCameraError('Unable to access camera. Please allow camera permissions and try again.'); }
+    } catch (err) {
+      console.error("Camera error:", err);
+      setCameraError('Unable to access camera. Please allow camera permissions and try again.');
+    }
   }, []);
 
   const stopCamera = useCallback(() => {
@@ -255,9 +399,81 @@ export function LiveFormAnalysis() {
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const base64 = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
     setAnalyzing(true);
+
+    try {
+      const prompt = `Analyze the human posture for the exercise: ${selectedExercise.name}.
+Instructions: ${selectedExercise.instructions}
+Important: If the person is not performing the exercise at all (e.g. they are sitting in a chair doing nothing), explicitly tell them to get into position and start the exercise.
+Return a JSON object with two properties:
+1. 'feedback': A short, encouraging message speaking directly to the user (e.g. "Your back is perfectly straight, great job!" or "Make sure to lower your hips a bit more!").
+2. 'joints': An array of 'joints' (e.g. face, shoulders, elbows, wrists, hips, knees, ankles).
+For each joint, provide:
+- name: string
+- x: number (screen coordinate 0 to 640)
+- y: number (screen coordinate 0 to 480)
+- isCorrect: boolean (true if posture is correct, false if incorrect)`;
+
+      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }, { inline_data: { mime_type: 'image/jpeg', data: base64 } }] }]
+        })
+      });
+
+      const data = await response.json();
+      let joints = [];
+      try {
+        const textResponse = data.candidates[0].content.parts[0].text;
+        const jsonStr = textResponse.replace(/```json\n?|```/g, '').trim();
+        const parsed = JSON.parse(jsonStr);
+        joints = parsed.joints || parsed || [];
+        if (parsed.feedback) setGeminiFeedback(parsed.feedback);
+      } catch (e) {
+        console.error("Failed to parse Gemini response", e);
+      }
+
+      if (overlayRef.current) {
+        const overlay = overlayRef.current;
+        overlay.width = 640; overlay.height = 480;
+        const octx = overlay.getContext('2d');
+        if (octx) {
+          octx.clearRect(0, 0, overlay.width, overlay.height);
+
+          let allCorrect = true;
+          joints.forEach((joint: any) => {
+            if (!joint.isCorrect) allCorrect = false;
+            octx.beginPath();
+            octx.arc(joint.x, joint.y, 8, 0, 2 * Math.PI);
+            if (joint.isCorrect) {
+              octx.fillStyle = 'rgba(0, 255, 0, 0.8)';
+              octx.shadowColor = 'lime';
+            } else {
+              octx.fillStyle = 'rgba(255, 0, 0, 0.8)';
+              octx.shadowColor = 'red';
+            }
+            octx.shadowBlur = 15;
+            octx.fill();
+          });
+
+          if (joints.length > 1) {
+            octx.beginPath();
+            octx.moveTo(joints[0].x, joints[0].y);
+            for (let i = 1; i < joints.length; i++) {
+              octx.lineTo(joints[i].x, joints[i].y);
+            }
+            octx.strokeStyle = allCorrect ? 'rgba(0, 255, 0, 0.5)' : 'rgba(255, 0, 0, 0.5)';
+            octx.lineWidth = 3;
+            octx.stroke();
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Gemini API Error", e);
+    }
+
     const res = await analyzeFrame(base64, selectedExercise.name, selectedExercise.instructions);
     setAnalyzing(false); setResult(res); setAnalyzedCount((c) => c + 1);
-    if (res.formScore > 0) { setPhase('result'); if (sampleTimerRef.current) { clearInterval(sampleTimerRef.current); sampleTimerRef.current = null; } }
   }, [selectedExercise]);
 
   const startAnalysis = useCallback(() => {
@@ -271,7 +487,7 @@ export function LiveFormAnalysis() {
   const tryAgain = useCallback(() => { setResult(null); setAnalyzedCount(0); setPhase('camera'); }, []);
 
   useEffect(() => { return () => { if (sampleTimerRef.current) clearInterval(sampleTimerRef.current); if (streamRef.current) streamRef.current.getTracks().forEach((t) => t.stop()); }; }, []);
-  useEffect(() => { if (phase === 'camera' && !cameraActive) startCamera(); }, [phase, cameraActive, startCamera]);
+  useEffect(() => { if (phase === 'camera') startCamera(); }, [phase, startCamera]);
 
   if (phase === 'select') {
     return (
@@ -303,12 +519,22 @@ export function LiveFormAnalysis() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         <div className="lg:col-span-2 space-y-4">
           <div className="relative bg-slate-900 rounded-2xl overflow-hidden aspect-video">
-            <video ref={videoRef} className="w-full h-full object-cover" muted playsInline />
+            <video ref={videoRef} className="w-full h-full object-cover" autoPlay muted playsInline />
+            <canvas ref={overlayRef} className="absolute inset-0 w-full h-full pointer-events-none" style={{ objectFit: 'cover' }} />
             {!cameraActive && <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400"><CameraOff className="w-12 h-12 mb-3" /><p className="text-sm">Camera is off</p></div>}
             {cameraActive && phase === 'analyzing' && <div className="absolute top-3 left-3 flex items-center gap-2 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-lg"><span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" /><span className="text-white text-xs font-medium">ANALYZING LIVE</span></div>}
             {cameraActive && phase === 'camera' && <div className="absolute top-3 left-3 flex items-center gap-2 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-lg"><span className="w-2 h-2 bg-accent-500 rounded-full" /><span className="text-white text-xs font-medium">CAMERA LIVE</span></div>}
             {analyzing && <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-black/50 backdrop-blur-sm px-3 py-1.5 rounded-lg"><Loader2 className="w-4 h-4 text-white animate-spin" /><span className="text-white text-xs font-medium">Analyzing frame...</span></div>}
           </div>
+          {cameraActive && (
+            <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 flex items-start gap-4 shadow-sm relative overflow-hidden transition-all duration-300">
+              <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold shrink-0 shadow-md z-10">AI</div>
+              <div className="z-10">
+                <h3 className="text-sm font-bold text-blue-900 mb-1">Gemini Coach</h3>
+                <p className="text-sm text-blue-800 font-medium leading-relaxed">{geminiFeedback}</p>
+              </div>
+            </div>
+          )}
           {cameraError && <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3"><AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" /><div><p className="text-sm font-medium text-red-700">{cameraError}</p><button onClick={startCamera} className="text-xs text-red-600 font-medium mt-1 hover:underline">Try again</button></div></div>}
           <div className="flex flex-wrap gap-3">
             {phase === 'camera' && cameraActive && <button onClick={startAnalysis} className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-xl font-medium text-sm transition-colors shadow-sm"><Play className="w-4 h-4" />Start Analysis</button>}
@@ -317,7 +543,8 @@ export function LiveFormAnalysis() {
               <button onClick={tryAgain} className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-xl font-medium text-sm transition-colors shadow-sm"><RotateCcw className="w-4 h-4" />Try Again</button>
               <button onClick={() => navigate('/result', { state: { result, exerciseId: selectedExerciseId } })} className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:border-primary-300 text-slate-700 px-5 py-2.5 rounded-xl font-medium text-sm transition-colors">View Full Result<ChevronRight className="w-4 h-4" /></button>
             </>}
-            {cameraActive && <button onClick={() => { stopCamera(); stopAnalysis(); setPhase('camera'); }} className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-600 px-5 py-2.5 rounded-xl font-medium text-sm transition-colors"><CameraOff className="w-4 h-4" />Turn Off Camera</button>}
+            {cameraActive && <button onClick={() => { stopCamera(); stopAnalysis(); }} className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-600 px-5 py-2.5 rounded-xl font-medium text-sm transition-colors"><CameraOff className="w-4 h-4" />Turn Off Camera</button>}
+            {!cameraActive && phase === 'camera' && !cameraError && <button onClick={startCamera} className="inline-flex items-center gap-2 bg-white border border-slate-200 hover:border-slate-300 text-slate-600 px-5 py-2.5 rounded-xl font-medium text-sm transition-colors"><Camera className="w-4 h-4" />Turn On Camera</button>}
           </div>
           {selectedExercise && <div className="bg-white rounded-2xl border border-slate-200 p-4"><div className="flex items-center gap-2 mb-2"><Eye className="w-4 h-4 text-slate-400" /><h3 className="text-sm font-semibold text-slate-700">Reference: {selectedExercise.name}</h3></div><div className="flex gap-4"><div className="w-24 h-24 bg-gradient-to-br from-slate-50 to-primary-50/30 rounded-xl flex items-center justify-center shrink-0"><ExerciseAnimation type={selectedExercise.animationType} className="w-20 h-20" /></div><p className="text-xs text-slate-500 leading-relaxed">{selectedExercise.instructions}</p></div></div>}
         </div>
@@ -333,7 +560,7 @@ export function LiveFormAnalysis() {
           </div>
           <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-2xl border border-primary-100 p-5">
             <div className="flex items-center gap-2 mb-2"><HeartPulse className="w-4 h-4 text-primary-500" /><h3 className="text-sm font-semibold text-slate-700">Cycle Context</h3></div>
-            <div className="space-y-2"><div className="flex justify-between"><span className="text-xs text-slate-500">Phase</span><span className="text-sm font-medium text-primary-700">{mockCycle.phase}</span></div><div className="flex justify-between"><span className="text-xs text-slate-500">Risk Modifier</span><span className="text-sm font-medium text-amber-600">+{mockCycle.riskModifier}%</span></div></div>
+            <div className="space-y-2"><div className="flex justify-between"><span className="text-xs text-slate-500">Phase</span><span className="text-sm font-medium text-primary-700">{cycle.phase}</span></div><div className="flex justify-between"><span className="text-xs text-slate-500">Readiness</span><span className="text-sm font-medium text-amber-600">{cycle.readiness}</span></div></div>
           </div>
           {result && <div className="bg-white rounded-2xl border border-slate-200 p-5 animate-float-up"><h3 className="text-sm font-semibold text-slate-700 mb-3">Detected</h3><div className="space-y-2">{result.detectedIssues.map((issue, i) => <div key={i} className="flex items-center gap-2">{issue.status === 'good' && <CheckCircle2 className="w-4 h-4 text-accent-500" />}{issue.status === 'warning' && <AlertTriangle className="w-4 h-4 text-amber-500" />}{issue.status === 'error' && <XCircle className="w-4 h-4 text-red-500" />}<span className="text-sm text-slate-700">{issue.label}</span></div>)}{result.detectedIssues.length === 0 && <p className="text-xs text-slate-400">No detailed issues detected yet.</p>}</div></div>}
           {result && <div className={`rounded-2xl border p-5 animate-float-up ${result.formScore >= 80 ? 'bg-accent-50 border-accent-200' : result.formScore >= 60 ? 'bg-amber-50 border-amber-200' : 'bg-red-50 border-red-200'}`}><div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold ${statusColor} mb-3`}>{result.formScore >= 80 ? <CheckCircle2 className="w-3.5 h-3.5" /> : <AlertTriangle className="w-3.5 h-3.5" />}{result.primaryIssue.toUpperCase()}</div><p className="text-sm text-slate-700 font-medium mb-2">{result.correction}</p>{result.rawFeedback.length > 0 && <ul className="space-y-1 mt-3 pt-3 border-t border-slate-200/50">{result.rawFeedback.slice(0, 3).map((fb, i) => <li key={i} className="text-xs text-slate-600 flex items-start gap-1.5"><span className="text-slate-400 mt-0.5">•</span>{fb}</li>)}</ul>}<div className="mt-3 pt-3 border-t border-slate-200/50"><p className="text-xs text-slate-400">Risk Level: <span className="font-semibold text-slate-600">{result.riskLevel}</span></p></div></div>}
@@ -346,6 +573,7 @@ export function LiveFormAnalysis() {
 
 // ===== ANALYSIS RESULT =====
 export function AnalysisResult() {
+  const cycle = useCycleProfile();
   const location = useLocation();
   const navigate = useNavigate();
   const state = (location.state as { result?: FormAnalysisResult; exerciseId?: string } | null);
@@ -402,7 +630,7 @@ export function AnalysisResult() {
       </div>}
       <div className="bg-white rounded-2xl border border-slate-200 p-5">
         <div className="flex items-center gap-2 mb-3"><HeartPulse className="w-4 h-4 text-primary-500" /><h2 className="text-sm font-semibold text-slate-700">Cycle Context</h2></div>
-        <div className="grid grid-cols-2 gap-4"><div><p className="text-xs text-slate-500">Phase</p><p className="text-sm font-bold text-primary-700">{mockCycle.phase}</p></div><div><p className="text-xs text-slate-500">Risk Modifier</p><p className="text-sm font-bold text-amber-600">+{mockCycle.riskModifier}%</p></div></div>
+        <div className="grid grid-cols-2 gap-4"><div><p className="text-xs text-slate-500">Phase</p><p className="text-sm font-bold text-primary-700">{cycle.phase}</p></div><div><p className="text-xs text-slate-500">Readiness</p><p className="text-sm font-bold text-amber-600">{cycle.readiness}</p></div></div>
       </div>
       <div className="flex flex-wrap gap-3">
         <Link to="/analysis" state={{ exerciseId }} className="inline-flex items-center gap-2 bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-xl font-medium text-sm transition-colors shadow-sm"><RotateCcw className="w-4 h-4" />Try Again</Link>
@@ -415,41 +643,90 @@ export function AnalysisResult() {
 
 // ===== CYCLE & RISK =====
 export function CycleRisk() {
+  const cycle = useCycleProfile();
+
   return (
     <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6">
-      <div><h1 className="text-2xl font-bold text-slate-900 mb-1">Cycle & Risk</h1><p className="text-slate-500 text-sm">Track your menstrual cycle phase and its impact on injury risk.</p></div>
-      <div className="bg-white rounded-2xl border border-slate-200 p-6">
-        <div className="flex items-center gap-2 mb-4"><HeartPulse className="w-5 h-5 text-primary-500" /><h2 className="text-sm font-semibold text-slate-700">Current Cycle Phase</h2></div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-xl p-5 text-center"><p className="text-xs text-slate-500 font-medium">Phase</p><p className="text-2xl font-bold text-primary-700 mt-1">{mockCycle.phase}</p></div>
-          <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 text-center"><div className="flex items-center justify-center gap-1.5"><Calendar className="w-4 h-4 text-amber-500" /><p className="text-xs text-slate-500 font-medium">Cycle Day</p></div><p className="text-2xl font-bold text-amber-600 mt-1">Day {mockCycle.day}</p></div>
-          <div className="bg-gradient-to-br from-red-50 to-rose-50 rounded-xl p-5 text-center"><div className="flex items-center justify-center gap-1.5"><TrendingUp className="w-4 h-4 text-red-500" /><p className="text-xs text-slate-500 font-medium">Risk Modifier</p></div><p className="text-2xl font-bold text-red-600 mt-1">+{mockCycle.riskModifier}%</p></div>
-        </div>
-        <div className="mt-4 pt-4 border-t border-slate-100"><p className="text-sm text-slate-600">{mockCycle.description}</p></div>
-      </div>
-      <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-2xl border border-primary-100 p-6">
-        <div className="flex items-center gap-2 mb-3"><Activity className="w-5 h-5 text-primary-500" /><h2 className="text-sm font-semibold text-slate-700">Training Recommendation</h2></div>
-        <p className="text-sm text-slate-700">{mockCycle.recommendation}</p>
-      </div>
-      <div className="bg-white rounded-2xl border border-slate-200 p-6">
-        <h2 className="text-sm font-semibold text-slate-700 mb-4">Cycle Timeline (28 days)</h2>
-        <div className="relative">
-          <div className="flex h-3 rounded-full overflow-hidden"><div className="bg-slate-400 flex-[5]" /><div className="bg-primary-500 flex-[8]" /><div className="bg-accent-500 flex-[3]" /><div className="bg-amber-500 flex-[12]" /></div>
-          <div className="absolute top-0 h-3 w-0.5 bg-slate-900" style={{ left: `${(mockCycle.day / 28) * 100}%` }} />
-          <div className="text-[10px] text-slate-400 mt-1" style={{ marginLeft: `${(mockCycle.day / 28) * 100 - 2}%` }}>Day {mockCycle.day}</div>
-        </div>
-        <div className="flex justify-between text-[10px] text-slate-400 mt-2"><span>Day 1</span><span>Day 14</span><span>Day 28</span></div>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {cyclePhases.map((p) => (
-          <div key={p.phase} className={`bg-white rounded-2xl border p-5 ${p.phase === mockCycle.phase ? 'border-primary-300 ring-2 ring-primary-100' : 'border-slate-200'}`}>
-            <div className="flex items-center justify-between mb-2"><div className="flex items-center gap-2"><div className={`w-3 h-3 rounded-full ${p.color}`} /><h3 className="font-semibold text-slate-900 text-sm">{p.phase}</h3></div>{p.phase === mockCycle.phase && <span className="text-[10px] font-bold text-primary-600 bg-primary-50 px-2 py-0.5 rounded-full">CURRENT</span>}</div>
-            <p className="text-xs text-slate-400 mb-2">{p.days}</p><p className="text-sm text-slate-600">{p.description}</p>
-            <div className="mt-3 pt-3 border-t border-slate-100"><span className="text-xs text-slate-500">Risk Modifier: </span><span className="text-xs font-bold text-slate-700">+{p.riskModifier}%</span></div>
+      <div><h1 className="text-2xl font-bold text-slate-900 mb-1">Cycle-Aware Training</h1><p className="text-slate-500 text-sm">Personalize your training based on your cycle and goals.</p></div>
+
+      {/* Set Your Profile Form */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6">
+        <h2 className="text-sm font-semibold text-slate-700 mb-4">Your Profile</h2>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Age Group</label>
+            <select value={cycle.ageGroup} onChange={e => cycle.setAgeGroup(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
+              <option value="Below 18">Below 18</option>
+              <option value="18-40">18–40</option>
+              <option value="40+">40+</option>
+            </select>
           </div>
-        ))}
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Your Goal</label>
+            <select value={cycle.userGoal} onChange={e => cycle.setUserGoal(e.target.value)} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white">
+              <option value="Strength & Muscle">Strength & Muscle</option>
+              <option value="Sports Performance">Sports Performance</option>
+              <option value="Endurance">Endurance</option>
+              <option value="General Fitness">General Fitness</option>
+              <option value="Mobility & Recovery">Mobility & Recovery</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Cycle Day (1-35)</label>
+            <input type="number" min="1" max="35" value={cycle.cycleDay} onChange={e => cycle.setCycleDay(Number(e.target.value))} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Average Cycle Length (21-35 days)</label>
+            <input type="number" min="21" max="35" value={cycle.cycleLength} onChange={e => cycle.setCycleLength(Number(e.target.value))} className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm" />
+          </div>
+        </div>
+
+        <button onClick={() => window.location.reload()} className="mt-4 bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-primary-700">Update Plan</button>
       </div>
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3"><AlertCircle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" /><p className="text-xs text-amber-700 leading-relaxed">All cycle-based risk calculations on this page use prototype demo logic and are not medically validated. This tool does not provide medical advice. Consult a qualified sports medicine professional for personalized guidance.</p></div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-4"><HeartPulse className="w-5 h-5 text-primary-500" /><h2 className="text-lg font-bold text-slate-800">Current Status</h2></div>
+          <div className="space-y-4">
+            <div><p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Phase</p><p className="text-xl font-bold text-primary-700">{cycle.phase}</p></div>
+            <div><p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Cycle Day</p><p className="text-lg font-medium text-slate-800">Day {cycle.cycleDay} of {cycle.cycleLength}</p></div>
+            <div><p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Training Readiness</p><span className="inline-block mt-1 px-3 py-1 bg-accent-50 text-accent-700 rounded-full text-sm font-bold">{cycle.readiness}</span></div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-2xl border border-primary-100 p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-4"><Activity className="w-5 h-5 text-primary-600" /><h2 className="text-lg font-bold text-slate-800">Today's Focus</h2></div>
+          <p className="text-lg font-semibold text-primary-800 mb-4">{cycle.focus}</p>
+
+          <p className="text-xs text-primary-600 uppercase tracking-wider font-semibold mb-2">What you may notice</p>
+          <p className="text-sm text-slate-700 mb-4">{cycle.description}</p>
+
+          <p className="text-xs text-primary-600 uppercase tracking-wider font-semibold mb-2">Recommended Training</p>
+          <ul className="list-disc list-inside text-sm text-slate-700 space-y-1">
+            {cycle.recommendedExercises.map((ex, i) => <li key={i}>{ex}</li>)}
+          </ul>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl border border-slate-200 p-6">
+        <h2 className="text-sm font-semibold text-slate-700 mb-4">Cycle Timeline ({cycle.cycleLength} days)</h2>
+        <div className="relative">
+          <div className="flex h-3 rounded-full overflow-hidden"><div className="bg-slate-400 flex-[5]" /><div className="bg-primary-500 flex-[8]" /><div className="bg-accent-500 flex-[2]" /><div className="bg-amber-500 flex-[13]" /></div>
+          <div className="absolute top-0 h-3 w-0.5 bg-slate-900" style={{ left: `${Math.min(100, Math.max(0, ((cycle.cycleDay - 1) / (cycle.cycleLength - 1)) * 100))}%` }} />
+          <div className="text-[10px] text-slate-400 mt-1" style={{ marginLeft: `${Math.min(100, Math.max(0, ((cycle.cycleDay - 1) / (cycle.cycleLength - 1)) * 100 - 2))}%` }}>Day {cycle.cycleDay}</div>
+        </div>
+      </div>
+
+      <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 flex items-start gap-3">
+        <AlertCircle className="w-5 h-5 text-slate-500 shrink-0 mt-0.5" />
+        <p className="text-xs text-slate-600 leading-relaxed">
+          Prototype / educational cycle-aware guidance — not medical advice. Consider reducing intensity if you experience significant pain, dizziness, unusual fatigue, or other concerning symptoms. For irregular cycles, the phase estimate is approximate.
+        </p>
+      </div>
     </div>
   );
 }
@@ -519,44 +796,77 @@ export function RedScreening() {
 
 // ===== PROGRESS =====
 export function Progress() {
-  const avgFormScore = Math.round(progressData.formScores.reduce((s, d) => s + d.score, 0) / progressData.formScores.length);
-  const avgLoad = Math.round(progressData.trainingLoad.reduce((s, d) => s + d.load, 0) / progressData.trainingLoad.length);
-  const avgCompletion = Math.round(progressData.workoutCompletion.reduce((s, d) => s + d.completed, 0) / progressData.workoutCompletion.length);
-  const currentRisk = progressData.riskTrend[progressData.riskTrend.length - 1].risk;
+  const { t } = useBhashini();
+
+  const formScores = progressData?.formScores ?? [];
+  const trainingLoad = progressData?.trainingLoad ?? [];
+  const workoutCompletion = progressData?.workoutCompletion ?? [];
+  const riskTrend = progressData?.riskTrend ?? [];
+
+  const avgFormScore = formScores.length ? Math.round(formScores.reduce((s, d) => s + d.score, 0) / formScores.length) : 0;
+  const avgLoad = trainingLoad.length ? Math.round(trainingLoad.reduce((s, d) => s + d.load, 0) / trainingLoad.length) : 0;
+  const avgCompletion = workoutCompletion.length ? Math.round(workoutCompletion.reduce((s, d) => s + d.completed, 0) / workoutCompletion.length) : 0;
+  const currentRisk = riskTrend.length ? riskTrend[riskTrend.length - 1].risk : 0;
   const tooltipStyle = { borderRadius: '12px', border: '1px solid #e2e8f0', fontSize: '12px' };
   const axisProps = { tick: { fontSize: 12, fill: '#94a3b8' }, axisLine: false, tickLine: false };
 
   return (
     <div className="p-6 md:p-8 max-w-6xl mx-auto space-y-6">
-      <div><h1 className="text-2xl font-bold text-slate-900 mb-1">Progress</h1><p className="text-slate-500 text-sm">Track your form scores, training load, risk trends, and workout completion.</p></div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-2xl border border-slate-200 p-5"><div className="flex items-center gap-2 mb-2"><Target className="w-4 h-4 text-primary-500" /><span className="text-xs text-slate-500 font-medium">Avg Form Score</span></div><p className="text-2xl font-bold text-slate-900">{avgFormScore}</p><p className="text-xs text-accent-600 mt-1">+4 this week</p></div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-5"><div className="flex items-center gap-2 mb-2"><Activity className="w-4 h-4 text-accent-500" /><span className="text-xs text-slate-500 font-medium">Avg Training Load</span></div><p className="text-2xl font-bold text-slate-900">{avgLoad}%</p><p className="text-xs text-slate-400 mt-1">Optimal range</p></div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-5"><div className="flex items-center gap-2 mb-2"><TrendingUp className="w-4 h-4 text-amber-500" /><span className="text-xs text-slate-500 font-medium">Current Risk</span></div><p className="text-2xl font-bold text-slate-900">{currentRisk}</p><p className="text-xs text-accent-600 mt-1">↓ 13 in 4 weeks</p></div>
-        <div className="bg-white rounded-2xl border border-slate-200 p-5"><div className="flex items-center gap-2 mb-2"><CheckSquare className="w-4 h-4 text-violet-500" /><span className="text-xs text-slate-500 font-medium">Avg Completion</span></div><p className="text-2xl font-bold text-slate-900">{avgCompletion}%</p><p className="text-xs text-slate-400 mt-1">This week</p></div>
+      <div>
+        <h1 className="text-2xl font-bold text-slate-900 mb-1">{t('progress.title', 'Progress')}</h1>
+        <p className="text-slate-500 text-sm">{t('progress.subtitle', 'Track your form scores, training load, risk trends, and workout completion.')}</p>
       </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <div className="flex items-center gap-2 mb-2"><Target className="w-4 h-4 text-primary-500" /><span className="text-xs text-slate-500 font-medium">{t('progress.avgFormScore', 'Avg Form Score')}</span></div>
+          <p className="text-2xl font-bold text-slate-900">{avgFormScore}</p>
+          <p className="text-xs text-accent-600 mt-1">+4 this week</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <div className="flex items-center gap-2 mb-2"><Activity className="w-4 h-4 text-accent-500" /><span className="text-xs text-slate-500 font-medium">{t('progress.avgTrainingLoad', 'Avg Training Load')}</span></div>
+          <p className="text-2xl font-bold text-slate-900">{avgLoad}%</p>
+          <p className="text-xs text-slate-400 mt-1">Optimal range</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <div className="flex items-center gap-2 mb-2"><TrendingUp className="w-4 h-4 text-amber-500" /><span className="text-xs text-slate-500 font-medium">{t('progress.currentRisk', 'Current Risk')}</span></div>
+          <p className="text-2xl font-bold text-slate-900">{currentRisk}</p>
+          <p className="text-xs text-accent-600 mt-1">↓ 13 in 4 weeks</p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200 p-5">
+          <div className="flex items-center gap-2 mb-2"><CheckSquare className="w-4 h-4 text-violet-500" /><span className="text-xs text-slate-500 font-medium">{t('progress.avgCompletion', 'Avg Completion')}</span></div>
+          <p className="text-2xl font-bold text-slate-900">{avgCompletion}%</p>
+          <p className="text-xs text-slate-400 mt-1">This week</p>
+        </div>
+      </div>
+
       <div className="bg-white rounded-2xl border border-slate-200 p-6">
-        <h2 className="text-sm font-semibold text-slate-700 mb-4">Form Score (This Week)</h2>
+        <h2 className="text-sm font-semibold text-slate-700 mb-4">{t('progress.formThisWeek', 'Form Score (This Week)')}</h2>
         <ResponsiveContainer width="100%" height={220}>
-          <AreaChart data={progressData.formScores}>
+          <AreaChart data={formScores}>
             <defs><linearGradient id="formGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#3393ff" stopOpacity={0.3} /><stop offset="100%" stopColor="#3393ff" stopOpacity={0} /></linearGradient></defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" /><XAxis dataKey="day" {...axisProps} /><YAxis domain={[50, 100]} {...axisProps} /><Tooltip contentStyle={tooltipStyle} /><Area type="monotone" dataKey="score" stroke="#3393ff" strokeWidth={2} fill="url(#formGrad)" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-2xl border border-slate-200 p-6">
-          <h2 className="text-sm font-semibold text-slate-700 mb-4">Training Load (This Week)</h2>
-          <ResponsiveContainer width="100%" height={200}><BarChart data={progressData.trainingLoad}><CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" /><XAxis dataKey="day" {...axisProps} /><YAxis {...axisProps} /><Tooltip contentStyle={tooltipStyle} /><Bar dataKey="load" fill="#10b981" radius={[6, 6, 0, 0]} /></BarChart></ResponsiveContainer>
+          <h2 className="text-sm font-semibold text-slate-700 mb-4">{t('progress.loadThisWeek', 'Training Load (This Week)')}</h2>
+          <ResponsiveContainer width="100%" height={200}><BarChart data={trainingLoad}><CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" /><XAxis dataKey="day" {...axisProps} /><YAxis {...axisProps} /><Tooltip contentStyle={tooltipStyle} /><Bar dataKey="load" fill="#10b981" radius={[6, 6, 0, 0]} /></BarChart></ResponsiveContainer>
         </div>
         <div className="bg-white rounded-2xl border border-slate-200 p-6">
-          <h2 className="text-sm font-semibold text-slate-700 mb-4">Risk Trend (4 Weeks)</h2>
-          <ResponsiveContainer width="100%" height={200}><LineChart data={progressData.riskTrend}><CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" /><XAxis dataKey="week" {...axisProps} /><YAxis domain={[0, 100]} {...axisProps} /><Tooltip contentStyle={tooltipStyle} /><Line type="monotone" dataKey="risk" stroke="#f59e0b" strokeWidth={2.5} dot={{ fill: '#f59e0b', r: 4 }} /></LineChart></ResponsiveContainer>
+          <h2 className="text-sm font-semibold text-slate-700 mb-4">{t('progress.riskTrend', 'Risk Trend (4 Weeks)')}</h2>
+          <ResponsiveContainer width="100%" height={200}><LineChart data={riskTrend}><CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" /><XAxis dataKey="week" {...axisProps} /><YAxis domain={[0, 100]} {...axisProps} /><Tooltip contentStyle={tooltipStyle} /><Line type="monotone" dataKey="risk" stroke="#f59e0b" strokeWidth={2.5} dot={{ fill: '#f59e0b', r: 4 }} /></LineChart></ResponsiveContainer>
         </div>
       </div>
+
       <div className="bg-white rounded-2xl border border-slate-200 p-6">
-        <h2 className="text-sm font-semibold text-slate-700 mb-4">Workout Completion (This Week)</h2>
-        <ResponsiveContainer width="100%" height={200}><BarChart data={progressData.workoutCompletion}><CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" /><XAxis dataKey="day" {...axisProps} /><YAxis domain={[0, 100]} {...axisProps} /><Tooltip contentStyle={tooltipStyle} /><Bar dataKey="completed" fill="#8b5cf6" radius={[6, 6, 0, 0]} /></BarChart></ResponsiveContainer>
+        <h2 className="text-sm font-semibold text-slate-700 mb-4">{t('progress.completionThisWeek', 'Workout Completion (This Week)')}</h2>
+        <ResponsiveContainer width="100%" height={200}><BarChart data={workoutCompletion}><CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" /><XAxis dataKey="day" {...axisProps} /><YAxis domain={[0, 100]} {...axisProps} /><Tooltip contentStyle={tooltipStyle} /><Bar dataKey="completed" fill="#8b5cf6" radius={[6, 6, 0, 0]} /></BarChart></ResponsiveContainer>
       </div>
       <p className="text-center text-xs text-slate-400">All progress data shown is demo/mock data for prototype purposes.</p>
     </div>
